@@ -1,6 +1,5 @@
 package mmenestret.maze.app
 import cats.effect.IO
-import cats._
 import cats.implicits._
 import cats.{Applicative, Monad}
 
@@ -8,13 +7,33 @@ import scala.util.Random
 
 object Main extends App {
 
-  final case class GameMap(sideLength: Int, holesPosition: List[Int], playerPosition: Int, finishPosition: Int)
+  final case class GameMap(sideLength: Int, trapsPosition: List[Int], playerPosition: Int, finishPosition: Int)
   object GameMap {
-    def emptyGameMap(length: Int, holesPosition: List[Int]): GameMap =
+    def emptyGameMap(length: Int, trapsPosition: List[Int]): GameMap =
       GameMap(sideLength = length,
-              holesPosition = holesPosition,
+              trapsPosition = trapsPosition,
               playerPosition = 0,
               finishPosition = length * length - 1)
+  }
+
+  sealed trait KeyboardLayout {
+    def upKey: Char
+    def downKey: Char
+    def leftKey: Char
+    def rightKey: Char
+  }
+  object Azerty extends KeyboardLayout {
+    val upKey: Char    = 'z'
+    val downKey: Char  = 's'
+    val leftKey: Char  = 'q'
+    val rightKey: Char = 'd'
+
+  }
+  object Qwerty extends KeyboardLayout {
+    def upKey: Char    = 'w'
+    def downKey: Char  = 's'
+    def leftKey: Char  = 'a'
+    def rightKey: Char = 'd'
   }
 
   sealed trait Move
@@ -29,11 +48,15 @@ object Main extends App {
   case object Lost      extends Finished
   case object Won       extends Finished
 
-  trait ConsoleIO[A[_]] {
+  trait PlayerInteractions[A[_]] {
     def printStr(str: String): A[Unit]
+    def getPlayerInput(layout: KeyboardLayout): A[Move]
+    def afkForMapSize(): A[Int]
+    def afkForNumberOfTrap(): A[Int]
+    def askForKeyboardLayout(): A[KeyboardLayout]
   }
-  object ConsoleIO {
-    def apply[A[_]: ConsoleIO]: ConsoleIO[A] = implicitly[ConsoleIO[A]]
+  object PlayerInteractions {
+    def apply[A[_]: PlayerInteractions]: PlayerInteractions[A] = implicitly[PlayerInteractions[A]]
   }
 
   trait Rng[A[_]] {
@@ -47,7 +70,6 @@ object Main extends App {
 
   trait GameDSL[A[_]] {
     def generateMapRepresentation(gm: GameMap): A[String]
-    def getPlayerInput: A[Move]
     def updateGameState(gameMap: GameMap, move: Move): A[(GameState, GameMap)]
     def endMessage(state: Finished): A[String]
   }
@@ -55,29 +77,32 @@ object Main extends App {
     def apply[A[_]: GameDSL]: GameDSL[A] = implicitly[GameDSL[A]]
   }
 
-  def program[A[_]: GameDSL: ConsoleIO: Rng: Monad](sideLength: Int, nbOfHoles: Int): A[Unit] = {
+  def program[A[_]: GameDSL: PlayerInteractions: Rng: Monad]: A[Unit] = {
 
-    val G: GameDSL[A]   = GameDSL[A]
-    val R: Rng[A]       = Rng[A]
-    val C: ConsoleIO[A] = ConsoleIO[A]
+    val G: GameDSL[A]            = GameDSL[A]
+    val R: Rng[A]                = Rng[A]
+    val C: PlayerInteractions[A] = PlayerInteractions[A]
 
-    def gameLoop(map: GameMap): A[Unit] = {
+    def gameLoop(map: GameMap, layout: KeyboardLayout): A[Unit] = {
       for {
         mapAsStr    ← G.generateMapRepresentation(map)
         _           ← C.printStr(mapAsStr)
-        input       ← G.getPlayerInput
+        input       ← C.getPlayerInput(layout)
         stateAndMap ← G.updateGameState(map, input)
         _ ← stateAndMap match {
-          case (Ongoing, newMap)    ⇒ gameLoop(newMap)
+          case (Ongoing, newMap)    ⇒ gameLoop(newMap, layout)
           case (state: Finished, _) ⇒ G.endMessage(state).flatMap(C.printStr)
         }
       } yield ()
     }
 
     for {
-      holesList ← R.generateNRngBetween(nbOfHoles)(1, sideLength * sideLength - 1)
-      map = GameMap.emptyGameMap(sideLength, holesList)
-      _ ← gameLoop(map)
+      sideLength ← C.afkForMapSize()
+      nbOfTraps  ← C.afkForNumberOfTrap()
+      layout     ← C.askForKeyboardLayout()
+      trapsList  ← R.generateNRngBetween(nbOfTraps)(1, sideLength * sideLength - 1)
+      map = GameMap.emptyGameMap(sideLength, trapsList)
+      _ ← gameLoop(map, layout)
     } yield ()
 
   }
@@ -88,36 +113,25 @@ object Main extends App {
         s"|${l.map(c ⇒ if (c != playerChar) s" $c " else c).mkString("")}|"
       }
       val playerChar = "\\o/"
-      val holeChar   = "x"
+      val trapChar   = "x"
       val finishChar = "?"
       def lineToStr  = lineWithPlayerToStr(playerChar) _
 
-      val GameMap(mapLength, holesPosition, currentPosition, finishPosition) = gameMap
+      val GameMap(mapLength, trapsPosition, currentPosition, finishPosition) = gameMap
       val emptyMap                                                           = List.fill(mapLength * mapLength)(" ")
       for {
         mapWithPlayer ← IO { emptyMap.updated(currentPosition, playerChar).updated(finishPosition, finishChar) }
-        mapWithHoles ← holesPosition.foldLeft(mapWithPlayer.pure[IO])((gameMapTry, holePosition) ⇒
-          gameMapTry.flatMap(gm ⇒ IO { gm.updated(holePosition, holeChar) }))
+        mapWithTraps ← trapsPosition.foldLeft(mapWithPlayer.pure[IO])((gameMapTry, trapPosition) ⇒
+          gameMapTry.flatMap(gm ⇒ IO { gm.updated(trapPosition, trapChar) }))
         topBorder              = s" ${"_" * (mapLength * 3)} "
-        bottomBorder           = s" ${"`" * (mapLength * 3)} "
-        (firstLine, rest)      = mapWithHoles.splitAt(mapLength) // First mapLength cells and rest
+        bottomBorder           = s" ${"°" * (mapLength * 3)} "
+        (firstLine, rest)      = mapWithTraps.splitAt(mapLength) // First mapLength cells and rest
         (innerLines, lastLine) = rest.splitAt(mapLength * (mapLength - 2))
         first                  = s" ${lineToStr(firstLine).tail}"
         inner: String          = s"${innerLines.grouped(mapLength).map(lineToStr).mkString("\n")}"
         last: String           = s"${lineToStr(lastLine).dropRight(1)} "
       } yield s"$topBorder\n$first\n$inner\n$last\n$bottomBorder"
     }
-
-    override def getPlayerInput: IO[Move] =
-      IO { scala.io.StdIn.readChar() }
-        .flatMap {
-          case 'z' ⇒ Up.pure[IO]
-          case 's' ⇒ Down.pure[IO]
-          case 'q' ⇒ Left.pure[IO]
-          case 'd' ⇒ Right.pure[IO]
-          case _   ⇒ getPlayerInput
-        }
-        .recoverWith { case _ ⇒ getPlayerInput }
 
     def computeNewPosition(gameMap: GameMap, move: Move): Int = {
       val GameMap(maplength, _, currentPosition, _) = gameMap
@@ -138,12 +152,12 @@ object Main extends App {
 
     override def updateGameState(gameMap: GameMap, move: Move): IO[(GameState, GameMap)] = {
 
-      def isHole(pos: Int, gm: GameMap): Boolean = gm.holesPosition.contains(pos)
+      def isTrap(pos: Int, gm: GameMap): Boolean = gm.trapsPosition.contains(pos)
 
       val np = computeNewPosition(gameMap, move)
       val state =
         if (np == gameMap.finishPosition) Won
-        else if (isHole(np, gameMap)) Lost
+        else if (isTrap(np, gameMap)) Lost
         else Ongoing
       (state, gameMap.copy(playerPosition = np)).pure[IO]
     }
@@ -159,10 +173,44 @@ object Main extends App {
     override def generateRngBetween(low: Int, high: Int): IO[Int] = IO(Random.nextInt(high - low) + low)
   }
 
-  implicit val consoleIO: ConsoleIO[IO] = new ConsoleIO[IO] {
+  implicit val playerInteractions: PlayerInteractions[IO] = new PlayerInteractions[IO] {
+    override def getPlayerInput(layout: KeyboardLayout): IO[Move] = {
+      IO { scala.io.StdIn.readChar() }
+        .flatMap {
+          case k if k == layout.upKey    ⇒ Up.pure[IO]
+          case k if k == layout.downKey  ⇒ Down.pure[IO]
+          case k if k == layout.leftKey  ⇒ Left.pure[IO]
+          case k if k == layout.rightKey ⇒ Right.pure[IO]
+          case _                         ⇒ getPlayerInput(layout)
+        }
+        .recoverWith { case _ ⇒ getPlayerInput(layout) }
+    }
+
     override def printStr(str: String): IO[Unit] = IO(println(str))
+
+    override def afkForMapSize(): IO[Int] =
+      (for {
+        _        ← printStr("What's the map side's size you want to play on, noob ?")
+        sideSize ← IO(scala.io.StdIn.readInt())
+      } yield sideSize).recoverWith { case _ ⇒ afkForMapSize() }
+
+    override def afkForNumberOfTrap(): IO[Int] =
+      (for {
+        _             ← printStr("How many traps ?")
+        numberOfTraps ← IO(scala.io.StdIn.readInt())
+      } yield numberOfTraps).recoverWith { case _ ⇒ afkForNumberOfTrap() }
+
+    override def askForKeyboardLayout(): IO[KeyboardLayout] =
+      (for {
+        _     <- printStr("(A)zerty or (Q)werty ? (A or Q for the idiots who didn't get it...)")
+        input ← IO(scala.io.StdIn.readChar().toLower)
+        layout = input match {
+          case 'a' ⇒ Azerty
+          case 'q' ⇒ Qwerty
+        }
+      } yield layout).recoverWith { case _ => askForKeyboardLayout() }
   }
 
-  program[IO](10, 30).unsafeRunSync()
+  program[IO].unsafeRunSync()
 
 }
