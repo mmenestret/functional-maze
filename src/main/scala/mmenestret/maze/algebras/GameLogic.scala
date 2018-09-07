@@ -3,7 +3,7 @@ import mmenestret.maze.ADT._
 
 trait GameLogic[Effect[_]] {
   def generateMapRepresentation(gm: GameMap): Effect[String]
-  def updateGameState(gameState: GameState, move: Move): Effect[GameState]
+  def updateGameState(gameMap: GameMap, move: Move): Effect[GameState]
   def endMessage(state: Finished): Effect[String]
 }
 object GameLogic {

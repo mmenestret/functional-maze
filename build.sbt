@@ -20,8 +20,6 @@ resolvers += Resolver.sonatypeRepo("releases")
 
 val catsCoreVersion = "1.3.1"
 
-val monocleVersion = "1.5.0" // 1.5.0-cats based on cats 1.0.x
-
 val validationVersion = "2.1.0"
 
 libraryDependencies ++= Seq(

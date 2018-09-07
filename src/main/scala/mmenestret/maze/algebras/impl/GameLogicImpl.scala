@@ -66,16 +66,16 @@ class GameLogicImpl[Effect[+ _]: MonadError[?[_], Throwable]] extends GameLogic[
     } yield s"$topBorderDesign\n$first\n$inner\n$last\n$bottomBorderDesign"
   }
 
-  override def updateGameState(gameState: GameState, move: Move): Effect[GameState] = {
+  override def updateGameState(gameMap: GameMap, move: Move): Effect[GameState] = {
 
     def isTrap(pos: Int, gm: GameMap): Boolean = gm.trapsPosition.contains(pos)
 
-    val newPosition = computeNewPosition(gameState.map, move)
+    val newPosition = computeNewPosition(gameMap, move)
     val state =
-      if (newPosition == gameState.map.finishPosition) Won
-      else if (isTrap(newPosition, gameState.map)) Lost
+      if (newPosition == gameMap.finishPosition) Won
+      else if (isTrap(newPosition, gameMap)) Lost
       else OnGoing
-    GameState(gameState.map.copy(playerPosition = newPosition), state).pure[Effect]
+    GameState(gameMap.copy(playerPosition = newPosition), state).pure[Effect]
   }
 
   override def endMessage(state: Finished): Effect[String] = state match {

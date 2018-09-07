@@ -19,7 +19,7 @@ object Main extends App {
         mapRepresentation ← G.generateMapRepresentation(gameState.map)
         _                 ← P.displayMap(mapRepresentation)
         playerMove        ← P.askPlayerDirection(layout)
-        gameState         ← G.updateGameState(gameState, playerMove)
+        gameState         ← G.updateGameState(gameState.map, playerMove)
         _ ← gameState match {
           case GameState(newMap, OnGoing)    ⇒ gameLoop(gameState.copy(newMap), layout)
           case GameState(_, state: Finished) ⇒ G.endMessage(state).flatMap(P.displayEndMessage)
