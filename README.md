@@ -1,6 +1,6 @@
 # Functional Maze
 
-A try to build a small console game in a purely functional fashion.
+An attempt to build a tiny console game in a purely functional fashion.
 
 Lots of desgin choices are overkill and some other are not implemented yet !
 
