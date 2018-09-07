@@ -13,7 +13,7 @@ class PlayerInteractionsImpl[Effect[+ _]: PrintAndRead: MonadError[?[_], Throwab
 
   override def displayMap(mapAsString: String): Effect[Unit] = PR.printStr(mapAsString)
 
-  override def askPlayerKeyboardLayout(layout: KeyboardLayout): Effect[Move] = {
+  override def askPlayerDirection(layout: KeyboardLayout): Effect[Move] = {
     (for {
       input ← PR.readChar
       move ← input match {
@@ -21,9 +21,9 @@ class PlayerInteractionsImpl[Effect[+ _]: PrintAndRead: MonadError[?[_], Throwab
         case k if k == layout.downKey  ⇒ Down.pure[Effect]
         case k if k == layout.leftKey  ⇒ Left.pure[Effect]
         case k if k == layout.rightKey ⇒ Right.pure[Effect]
-        case _                         ⇒ askPlayerKeyboardLayout(layout)
+        case _                         ⇒ askPlayerDirection(layout)
       }
-    } yield move).recoverWith { case _ ⇒ askPlayerKeyboardLayout(layout) }
+    } yield move).recoverWith { case _ ⇒ askPlayerDirection(layout) }
   }
 
   override def afkForMapSize(): Effect[Int] =

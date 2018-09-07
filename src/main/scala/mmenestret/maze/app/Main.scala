@@ -14,18 +14,17 @@ object Main extends App {
     val R: Rng[Effect]                = Rng[Effect]
     val P: PlayerInteractions[Effect] = PlayerInteractions[Effect]
 
-    def gameLoop(map: GameMap, layout: KeyboardLayout): Effect[Unit] = {
+    def gameLoop(map: GameMap, layout: KeyboardLayout): Effect[Unit] =
       for {
-        mapAsStr    ← G.generateMapRepresentation(map)
-        _           ← P.displayMap(mapAsStr)
-        input       ← P.askPlayerKeyboardLayout(layout)
-        stateAndMap ← G.updateGameState(map, input)
+        mapRepresentation ← G.generateMapRepresentation(map)
+        _                 ← P.displayMap(mapRepresentation)
+        playerMove        ← P.askPlayerDirection(layout)
+        stateAndMap       ← G.updateGameState(map, playerMove)
         _ ← stateAndMap match {
           case (Ongoing, newMap)    ⇒ gameLoop(newMap, layout)
           case (state: Finished, _) ⇒ G.endMessage(state).flatMap(P.displayEndMessage)
         }
       } yield ()
-    }
 
     for {
       sideLength ← P.afkForMapSize()
