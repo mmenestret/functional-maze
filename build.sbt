@@ -18,7 +18,7 @@ scalacOptions ++= Seq(
 
 resolvers += Resolver.sonatypeRepo("releases")
 
-val catsCoreVersion = "1.2.0"
+val catsCoreVersion = "1.3.1"
 
 val monocleVersion = "1.5.0" // 1.5.0-cats based on cats 1.0.x
 
@@ -26,7 +26,7 @@ val validationVersion = "2.1.0"
 
 libraryDependencies ++= Seq(
   "org.typelevel"              %% "cats-core"       % catsCoreVersion,
-  "org.typelevel"              %% "cats-effect"     % "1.0.0-RC2",
+  "org.typelevel"              %% "cats-effect"     % "1.0.0",
   "org.scalaz"                 %% "scalaz-zio"      % "0.2.6"
 )
 

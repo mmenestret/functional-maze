@@ -38,9 +38,12 @@ object Main extends App {
 
   }
 
-  implicit val rng = new RngImp                 {}
-  implicit val pi  = new PlayerInteractionsImpl {}
-  implicit val ga  = new GameActionsImpl        {}
-  program[IO].unsafeRunSync()
+  type Effect[+A] = IO[A]
+
+  implicit val rng = new RngImp[Effect]                 {}
+  implicit val pi  = new PlayerInteractionsImpl[Effect] {}
+  implicit val ga  = new GameActionsImpl[Effect]        {}
+
+  program[Effect].unsafeRunSync()
 
 }

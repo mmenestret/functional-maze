@@ -1,35 +1,12 @@
 package mmenestret.maze.algebras.impl
-import cats.effect.IO
+import cats.Monad
 import cats.implicits._
 import mmenestret.maze.ADT._
 import mmenestret.maze.algebras.GameActions
 
-trait GameActionsImpl extends GameActions[IO] {
+class GameActionsImpl[Effect[+ _]: Monad] extends GameActions[Effect] {
 
-  override def generateMapRepresentation(gameMap: GameMap): IO[String] = {
-    def lineWithPlayerToStr(playerChar: String)(l: List[String]): String = {
-      s"|${l.map(c ⇒ if (c != playerChar) s" $c " else c).mkString("")}|"
-    }
-    val playerChar                       = "\\o/"
-    val trapChar                         = "x"
-    val finishChar                       = "?"
-    def lineToStr: List[String] ⇒ String = lineWithPlayerToStr(playerChar) _
-
-    val GameMap(mapLength, trapsPosition, currentPosition, finishPosition) = gameMap
-    val emptyMap                                                           = List.fill(mapLength * mapLength)(" ")
-    for {
-      mapWithPlayer ← IO { emptyMap.updated(currentPosition, playerChar).updated(finishPosition, finishChar) }
-      mapWithTraps ← trapsPosition.foldLeft(mapWithPlayer.pure[IO])((gameMapTry, trapPosition) ⇒
-        gameMapTry.flatMap(gm ⇒ IO { gm.updated(trapPosition, trapChar) }))
-      topBorder              = s" ${"_" * (mapLength * 3)} "
-      bottomBorder           = s" ${"°" * (mapLength * 3)} "
-      (firstLine, rest)      = mapWithTraps.splitAt(mapLength) // First mapLength cells and rest
-      (innerLines, lastLine) = rest.splitAt(mapLength * (mapLength - 2))
-      first                  = s" ${lineToStr(firstLine).tail}"
-      inner: String          = s"${innerLines.grouped(mapLength).map(lineToStr).mkString("\n")}"
-      last: String           = s"${lineToStr(lastLine).dropRight(1)} "
-    } yield s"$topBorder\n$first\n$inner\n$last\n$bottomBorder"
-  }
+  val M: Monad[Effect] = Monad[Effect]
 
   def computeNewPosition(gameMap: GameMap, move: Move): Int = {
     val GameMap(maplength, _, currentPosition, _) = gameMap
@@ -48,7 +25,37 @@ trait GameActionsImpl extends GameActions[IO] {
     }
   }
 
-  override def updateGameState(gameMap: GameMap, move: Move): IO[(GameState, GameMap)] = {
+  override def generateMapRepresentation(gameMap: GameMap): Effect[String] = {
+
+    def lineWithPlayerToStr(playerChar: String)(l: List[String]): String = {
+      s"|${l.map(c ⇒ if (c != playerChar) s" $c " else c).mkString("")}|"
+    }
+    val playerChar                       = "\\o/"
+    val trapChar                         = "x"
+    val finishChar                       = "?"
+    def lineToStr: List[String] ⇒ String = lineWithPlayerToStr(playerChar)
+
+    val GameMap(mapLength, trapsPosition, currentPosition, finishPosition) = gameMap
+    val emptyMap                                                           = List.fill(mapLength * mapLength)(" ")
+
+    for {
+      mapWithPlayer ← emptyMap
+        .updated(currentPosition, playerChar)
+        .updated(finishPosition, finishChar)
+        .pure[Effect]
+      mapWithTraps ← trapsPosition.foldLeft(mapWithPlayer.pure[Effect])((gameMapTry, trapPosition) ⇒
+        gameMapTry.flatMap(gm ⇒ gm.updated(trapPosition, trapChar).pure[Effect]))
+      topBorder              = s" ${"_" * (mapLength * 3)} "
+      bottomBorder           = s" ${"°" * (mapLength * 3)} "
+      (firstLine, rest)      = mapWithTraps.splitAt(mapLength) // First mapLength cells and rest
+      (innerLines, lastLine) = rest.splitAt(mapLength * (mapLength - 2))
+      first                  = s" ${lineToStr(firstLine).tail}"
+      inner: String          = s"${innerLines.grouped(mapLength).map(lineToStr).mkString("\n")}"
+      last: String           = s"${lineToStr(lastLine).dropRight(1)} "
+    } yield s"$topBorder\n$first\n$inner\n$last\n$bottomBorder"
+  }
+
+  override def updateGameState(gameMap: GameMap, move: Move): Effect[(GameState, GameMap)] = {
 
     def isTrap(pos: Int, gm: GameMap): Boolean = gm.trapsPosition.contains(pos)
 
@@ -57,12 +64,12 @@ trait GameActionsImpl extends GameActions[IO] {
       if (np == gameMap.finishPosition) Won
       else if (isTrap(np, gameMap)) Lost
       else Ongoing
-    (state, gameMap.copy(playerPosition = np)).pure[IO]
+    (state, gameMap.copy(playerPosition = np)).pure[Effect]
   }
 
-  override def endMessage(state: Finished): IO[String] = state match {
-    case Lost ⇒ "You lost, you piece of shit !".pure[IO]
-    case Won  ⇒ "You won, lucky bastard !".pure[IO]
+  override def endMessage(state: Finished): Effect[String] = state match {
+    case Lost ⇒ "You lost, you piece of shit !".pure[Effect]
+    case Won  ⇒ "You won, lucky bastard !".pure[Effect]
   }
 
 }
