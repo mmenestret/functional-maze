@@ -8,9 +8,9 @@ import mmenestret.maze.algebras.impl._
 
 object Main extends App {
 
-  def program[Effect[_]: GameActions: PlayerInteractions: Rng: Monad]: Effect[Unit] = {
+  def program[Effect[_]: GameLogic: PlayerInteractions: Rng: Monad]: Effect[Unit] = {
 
-    val G: GameActions[Effect]        = GameActions[Effect]
+    val G: GameLogic[Effect]          = GameLogic[Effect]
     val R: Rng[Effect]                = Rng[Effect]
     val P: PlayerInteractions[Effect] = PlayerInteractions[Effect]
 
@@ -43,7 +43,7 @@ object Main extends App {
   implicit val rng: RngImp[MyEffect]                = new RngImp[MyEffect]                 {}
   implicit val pr: PrintAndReadImpl[MyEffect]       = new PrintAndReadImpl[MyEffect]       {}
   implicit val pi: PlayerInteractionsImpl[MyEffect] = new PlayerInteractionsImpl[MyEffect] {}
-  implicit val ga: GameActionsImpl[MyEffect]        = new GameActionsImpl[MyEffect]        {}
+  implicit val ga: GameLogicImpl[MyEffect]          = new GameLogicImpl[MyEffect]          {}
 
   program[MyEffect].unsafeRunSync()
 

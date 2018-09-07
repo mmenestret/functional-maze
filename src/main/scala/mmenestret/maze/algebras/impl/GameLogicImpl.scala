@@ -2,9 +2,9 @@ package mmenestret.maze.algebras.impl
 import cats.Monad
 import cats.implicits._
 import mmenestret.maze.ADT._
-import mmenestret.maze.algebras.GameActions
+import mmenestret.maze.algebras.GameLogic
 
-class GameActionsImpl[Effect[+ _]: Monad] extends GameActions[Effect] {
+class GameLogicImpl[Effect[+ _]: Monad] extends GameLogic[Effect] {
 
   val M: Monad[Effect] = Monad[Effect]
 
