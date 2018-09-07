@@ -14,15 +14,15 @@ object Main extends App {
     val R: Rng[Effect]                = Rng[Effect]
     val P: PlayerInteractions[Effect] = PlayerInteractions[Effect]
 
-    def gameLoop(map: GameMap, layout: KeyboardLayout): Effect[Unit] =
+    def gameLoop(gameState: GameState, layout: KeyboardLayout): Effect[Unit] =
       for {
-        mapRepresentation ← G.generateMapRepresentation(map)
+        mapRepresentation ← G.generateMapRepresentation(gameState.map)
         _                 ← P.displayMap(mapRepresentation)
         playerMove        ← P.askPlayerDirection(layout)
-        stateAndMap       ← G.updateGameState(map, playerMove)
-        _ ← stateAndMap match {
-          case (Ongoing, newMap)    ⇒ gameLoop(newMap, layout)
-          case (state: Finished, _) ⇒ G.endMessage(state).flatMap(P.displayEndMessage)
+        gameState         ← G.updateGameState(gameState, playerMove)
+        _ ← gameState match {
+          case GameState(newMap, OnGoing)    ⇒ gameLoop(gameState.copy(newMap), layout)
+          case GameState(_, state: Finished) ⇒ G.endMessage(state).flatMap(P.displayEndMessage)
         }
       } yield ()
 
@@ -32,7 +32,7 @@ object Main extends App {
       layout     ← P.askForKeyboardLayout()
       trapsList  ← R.generateNRngBetween(nbOfTraps)(1, sideLength * sideLength - 1)
       map = GameMap.emptyGameMap(sideLength, trapsList)
-      _ ← gameLoop(map, layout)
+      _ ← gameLoop(GameState(map, OnGoing), layout)
     } yield ()
 
   }
