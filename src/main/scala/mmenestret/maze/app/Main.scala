@@ -26,9 +26,11 @@ object Main extends App {
       } yield ()
 
     for {
+      _          ← P.clearPlayerScreen()
       sideLength ← P.afkForMapSize()
       nbOfTraps  ← P.afkForNumberOfTrap()
       layout     ← P.askForKeyboardLayout()
+      _          ← P.clearPlayerScreen()
       trapsList  ← R.generateNRngBetween(nbOfTraps)(1, sideLength * sideLength - 1)
       map = GameMap.emptyGameMap(sideLength, trapsList)
       _ ← gameLoop(GameState(map, OnGoing), layout)

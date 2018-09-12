@@ -14,7 +14,7 @@ object PrintAndReadLanternaImpl {
       new PrintAndRead[Effect] {
         def putChar(c: Char): Effect[Unit]     = S.delay(term.putCharacter(c))
         def flush: Effect[Unit]                = S.delay(term.flush())
-        def clearScreen: Effect[Unit]          = S.delay(term.clearScreen())
+        def clearScreen(): Effect[Unit]        = S.delay(term.clearScreen())
         def println(str: String): Effect[Unit] = str.toList.traverse(putChar) *> putChar('\n') *> flush
         def clearAndPrintln(str: String): Effect[Unit] =
           clearScreen *> str.toList.traverse(putChar) *> putChar('\n') *> flush

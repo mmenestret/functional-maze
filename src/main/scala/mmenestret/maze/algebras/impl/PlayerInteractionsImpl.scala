@@ -11,19 +11,22 @@ object PlayerInteractionsImpl {
 
       val PR: PrintAndRead[Effect] = PrintAndRead[Effect]
 
+      override def clearPlayerScreen(): Effect[Unit] = PR.clearScreen()
+
       override def displayEndMessage(msg: String): Effect[Unit] = PR.println(msg)
 
       override def displayMap(mapAsString: String): Effect[Unit] = PR.clearAndPrintln(mapAsString)
 
       override def askPlayerDirection(layout: KeyboardLayout): Effect[Move] = {
+        val keys = KeyboardLayout.keys(layout)
         (for {
           input ← PR.readKeyStrokeAsChar
           move ← input match {
-            case k if k == layout.upKey    ⇒ Up.pure[Effect]: Effect[Move]
-            case k if k == layout.downKey  ⇒ Down.pure[Effect]
-            case k if k == layout.leftKey  ⇒ Left.pure[Effect]
-            case k if k == layout.rightKey ⇒ Right.pure[Effect]
-            case _                         ⇒ askPlayerDirection(layout)
+            case k if k == keys.up    ⇒ Up.pure[Effect]: Effect[Move]
+            case k if k == keys.down  ⇒ Down.pure[Effect]
+            case k if k == keys.left  ⇒ Left.pure[Effect]
+            case k if k == keys.right ⇒ Right.pure[Effect]
+            case _                    ⇒ askPlayerDirection(layout)
           }
         } yield move).recoverWith { case _ ⇒ askPlayerDirection(layout) }
       }

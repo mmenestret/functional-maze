@@ -1,22 +1,14 @@
 package mmenestret.maze.ADT
 
-sealed abstract class KeyboardLayout {
-  def upKey: Char
-  def downKey: Char
-  def leftKey: Char
-  def rightKey: Char
-}
+sealed abstract class KeyboardLayout
+object Azerty extends KeyboardLayout
+object Qwerty extends KeyboardLayout
 
-object Azerty extends KeyboardLayout {
-  val upKey: Char    = 'z'
-  val downKey: Char  = 's'
-  val leftKey: Char  = 'q'
-  val rightKey: Char = 'd'
-}
+final case class KeyboardKeys(up: Char, down: Char, left: Char, right: Char)
 
-object Qwerty extends KeyboardLayout {
-  def upKey: Char    = 'w'
-  def downKey: Char  = 's'
-  def leftKey: Char  = 'a'
-  def rightKey: Char = 'd'
+object KeyboardLayout {
+  def keys(keyboardLayout: KeyboardLayout): KeyboardKeys = keyboardLayout match {
+    case Azerty ⇒ KeyboardKeys(up = 'z', down = 's', left = 'q', right = 'd')
+    case Qwerty ⇒ KeyboardKeys(up = 'w', down = 's', left = 'a', right = 'd')
+  }
 }

@@ -8,6 +8,7 @@ trait PlayerInteractions[Effect[_]] {
   def afkForMapSize(): Effect[Int]
   def afkForNumberOfTrap(): Effect[Int]
   def askForKeyboardLayout(): Effect[KeyboardLayout]
+  def clearPlayerScreen(): Effect[Unit]
 }
 object PlayerInteractions {
   def apply[Effect[_]: PlayerInteractions]: PlayerInteractions[Effect] = implicitly[PlayerInteractions[Effect]]
