@@ -37,10 +37,10 @@ object Main extends App {
   }
 
   def program[Effect[+ _]: Sync]: Effect[Unit] = {
-    PrintAndReadLanternaImpl.create[Effect].flatMap { implicit term ⇒
-      implicit val g: GameLogic[Effect]           = new GameLogicImpl[Effect]
-      implicit val rng: Rng[Effect]               = new RngImp[Effect]
-      implicit val pi: PlayerInteractions[Effect] = new PlayerInteractionsImpl[Effect]
+    PrintAndReadLanternaImpl[Effect].flatMap { implicit term ⇒
+      implicit val g: GameLogic[Effect]           = GameLogicImpl[Effect]
+      implicit val rng: Rng[Effect]               = RngImp[Effect]
+      implicit val pi: PlayerInteractions[Effect] = PlayerInteractionsImpl[Effect]
       game[Effect]
     }
   }

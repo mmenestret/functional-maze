@@ -4,9 +4,13 @@ import mmenestret.maze.algebras.Rng
 
 import scala.util.Random
 
-class RngImp[Effect[_]: Sync] extends Rng[Effect] {
+object RngImp {
 
-  val S: Sync[Effect] = Sync[Effect]
+  def apply[Effect[_]: Sync]: Rng[Effect] = new Rng[Effect] {
 
-  override def generateRngBetween(low: Int, high: Int): Effect[Int] = S.delay(Random.nextInt(high - low) + low)
+    val S: Sync[Effect] = Sync[Effect]
+
+    override def generateRngBetween(low: Int, high: Int): Effect[Int] = S.delay(Random.nextInt(high - low) + low)
+  }
+
 }

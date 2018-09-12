@@ -5,16 +5,18 @@ import com.googlecode.lanterna.terminal.DefaultTerminalFactory
 import mmenestret.maze.algebras.PrintAndRead
 
 object PrintAndReadLanternaImpl {
-  def create[Effect[_]: Sync]: Effect[PrintAndRead[Effect]] = {
+
+  def apply[Effect[_]: Sync]: Effect[PrintAndRead[Effect]] = {
 
     val S = Sync[Effect]
 
     S.delay(new DefaultTerminalFactory().createTerminal()).map { term ⇒
       new PrintAndRead[Effect] {
-        def putChar(c: Char): Effect[Unit] = S.delay(term.putCharacter(c))
-        def flush: Effect[Unit]            = S.delay(term.flush())
-        def clearScreen: Effect[Unit]      = S.delay(term.clearScreen())
-        def println(str: String): Effect[Unit] =
+        def putChar(c: Char): Effect[Unit]     = S.delay(term.putCharacter(c))
+        def flush: Effect[Unit]                = S.delay(term.flush())
+        def clearScreen: Effect[Unit]          = S.delay(term.clearScreen())
+        def println(str: String): Effect[Unit] = str.toList.traverse(putChar) *> putChar('\n') *> flush
+        def clearAndPrintln(str: String): Effect[Unit] =
           clearScreen *> str.toList.traverse(putChar) *> putChar('\n') *> flush
         def readStr: Effect[String] = S.delay(scala.io.StdIn.readLine()).recoverWith { case _ ⇒ readStr }
         def readInt: Effect[Int]    = S.delay(scala.io.StdIn.readInt()).recoverWith { case _  ⇒ readInt }
@@ -30,4 +32,5 @@ object PrintAndReadLanternaImpl {
       }
     }
   }
+
 }
