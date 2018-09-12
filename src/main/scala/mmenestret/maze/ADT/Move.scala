@@ -1,6 +1,6 @@
 package mmenestret.maze.ADT
 
-sealed trait Move
+sealed abstract class Move
 case object Up    extends Move
 case object Down  extends Move
 case object Left  extends Move
