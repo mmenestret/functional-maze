@@ -1,5 +1,6 @@
 package mmenestret.maze.app
 import cats.Monad
+import cats.data.StateT
 import cats.effect.{IO, Sync}
 import cats.implicits._
 import mmenestret.maze.ADT._
@@ -13,15 +14,18 @@ object Main extends App {
     val R: Rng[Effect]                = Rng[Effect]
     val P: PlayerInteractions[Effect] = PlayerInteractions[Effect]
 
-    def gameLoop(gameState: GameState, layout: KeyboardLayout): Effect[Unit] =
+    def gameLoop(layout: KeyboardLayout): StateT[Effect, GameState, Unit] =
       for {
-        mapRepresentation ← G.generateMapRepresentation(gameState.map)
-        _                 ← P.displayMap(mapRepresentation)
-        playerMove        ← P.askPlayerDirection(layout)
-        gameState         ← G.updateGameState(gameState.map, playerMove)
+        state             ← StateT.get[Effect, GameState]
+        mapRepresentation ← StateT.liftF(G.generateMapRepresentation(state.map))
+        _                 ← StateT.liftF(P.displayMap(mapRepresentation))
+        playerMove        ← StateT.liftF(P.askPlayerDirection(layout))
+        gameState         ← StateT.liftF(G.computeGameState(state.map, playerMove))
         _ ← gameState match {
-          case GameState(newMap, OnGoing)    ⇒ gameLoop(gameState.copy(newMap), layout)
-          case GameState(_, state: Finished) ⇒ G.endMessage(state).flatMap(P.displayEndMessage)
+          case GameState(newMap, OnGoing) ⇒
+            StateT.set[Effect, GameState](gameState.copy(newMap): GameState).flatMap(_ ⇒ gameLoop(layout))
+          case GameState(_, state: Finished) ⇒
+            StateT.liftF[Effect, GameState, Unit](G.endMessage(state).flatMap(P.displayEndMessage))
         }
       } yield ()
 
@@ -33,7 +37,7 @@ object Main extends App {
       _          ← P.clearPlayerScreen()
       trapsList  ← R.generateNRngBetween(nbOfTraps)(1, sideLength * sideLength - 1)
       map = GameMap.emptyGameMap(sideLength, trapsList)
-      _ ← gameLoop(GameState(map, OnGoing), layout)
+      _ ← gameLoop(layout).runA(GameState(map, OnGoing))
     } yield ()
 
   }

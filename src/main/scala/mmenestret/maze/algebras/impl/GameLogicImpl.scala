@@ -67,7 +67,7 @@ object GameLogicImpl {
       } yield s"$topBorderDesign\n$first\n$inner\n$last\n$bottomBorderDesign"
     }
 
-    override def updateGameState(gameMap: GameMap, move: Move): Effect[GameState] = {
+    override def computeGameState(gameMap: GameMap, move: Move): Effect[GameState] = {
 
       def isTrap(pos: Int, gm: GameMap): Boolean = gm.trapsPosition.contains(pos)
 
