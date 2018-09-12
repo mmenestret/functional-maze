@@ -15,7 +15,7 @@ class PlayerInteractionsImpl[Effect[+ _]: PrintAndRead: MonadError[?[_], Throwab
 
   override def askPlayerDirection(layout: KeyboardLayout): Effect[Move] = {
     (for {
-      input ← PR.readChar
+      input ← PR.readKeyStrokeAsChar
       move ← input match {
         case k if k == layout.upKey    ⇒ Up.pure[Effect]: Effect[Move]
         case k if k == layout.downKey  ⇒ Down.pure[Effect]
@@ -27,25 +27,16 @@ class PlayerInteractionsImpl[Effect[+ _]: PrintAndRead: MonadError[?[_], Throwab
   }
 
   override def afkForMapSize(): Effect[Int] =
-    (for {
-      _        ← PR.println("What's the map side's size you want to play on, noob ?")
-      sideSize ← PR.readInt
-    } yield sideSize).recoverWith { case _ ⇒ afkForMapSize() }
+    PR.println("What's the map side's size you want to play on, noob ?") *> PR.readInt
 
-  override def afkForNumberOfTrap(): Effect[Int] =
-    (for {
-      _             ← PR.println("How many traps ?")
-      numberOfTraps ← PR.readInt
-    } yield numberOfTraps).recoverWith { case _ ⇒ afkForNumberOfTrap() }
+  override def afkForNumberOfTrap(): Effect[Int] = PR.println("How many traps ?") *> PR.readInt
 
   override def askForKeyboardLayout(): Effect[KeyboardLayout] =
-    (for {
-      _     <- PR.println("(A)zerty or (Q)werty ? (A or Q for the idiots who didn't get it...)")
-      input ← PR.readChar.map(_.toLower)
-      layout = input match {
-        case 'a' ⇒ Azerty
-        case 'q' ⇒ Qwerty
+    (PR.println("(A)zerty or (Q)werty ? (A or Q for the idiots who didn't get it...)") *> PR.readChar.map(_.toLower))
+      .flatMap {
+        case 'a' ⇒ Azerty.pure[Effect]
+        case 'q' ⇒ Qwerty.pure[Effect]
+        case _ ⇒ askForKeyboardLayout()
       }
-    } yield layout).recoverWith { case _ => askForKeyboardLayout() }
 
 }

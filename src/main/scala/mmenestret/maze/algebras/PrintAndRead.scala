@@ -5,6 +5,7 @@ trait PrintAndRead[Effect[_]] {
   def readStr: Effect[String]
   def readInt: Effect[Int]
   def readChar: Effect[Char]
+  def readKeyStrokeAsChar: Effect[Char]
 }
 
 object PrintAndRead {
