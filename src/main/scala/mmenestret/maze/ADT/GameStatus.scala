@@ -1,6 +1,6 @@
 package mmenestret.maze.ADT
 
-sealed trait GameStatus
+sealed abstract class GameStatus
 case object OnGoing   extends GameStatus
 sealed trait Finished extends GameStatus
 case object Lost      extends Finished

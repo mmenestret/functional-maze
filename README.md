@@ -24,5 +24,3 @@ Here is the map with a side size of 10 and 20 traps:
 |                x     x     ?  
  °°°°°°°°°°°°°°°°°°°°°°°°°°°°°° 
  ```
-
-Sorry about how the console prints... gonna fix it later !
