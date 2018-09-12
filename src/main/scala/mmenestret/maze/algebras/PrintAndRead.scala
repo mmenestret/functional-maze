@@ -1,7 +1,7 @@
 package mmenestret.maze.algebras
 
 trait PrintAndRead[Effect[_]] {
-  def printStr(str: String): Effect[Unit]
+  def println(str: String): Effect[Unit]
   def readStr: Effect[String]
   def readInt: Effect[Int]
   def readChar: Effect[Char]

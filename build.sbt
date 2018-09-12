@@ -23,10 +23,11 @@ val catsCoreVersion = "1.3.1"
 val validationVersion = "2.1.0"
 
 libraryDependencies ++= Seq(
-  "org.typelevel" %% "cats-core"     % catsCoreVersion,
-  "org.typelevel" %% "cats-effect"   % "1.0.0",
-  "org.typelevel" %% "cats-mtl-core" % "0.3.0",
-  "org.scalaz"    %% "scalaz-zio"    % "0.2.6"
+  "org.typelevel"           %% "cats-core"     % catsCoreVersion,
+  "org.typelevel"           %% "cats-effect"   % "1.0.0",
+  "org.typelevel"           %% "cats-mtl-core" % "0.3.0",
+  "org.scalaz"              %% "scalaz-zio"    % "0.2.6",
+  "com.googlecode.lanterna" % "lanterna"       % "3.0.1"
 )
 
 addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.3")
