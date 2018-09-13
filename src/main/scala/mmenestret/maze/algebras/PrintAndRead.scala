@@ -1,15 +1,15 @@
 package mmenestret.maze.algebras
 
-trait PrintAndRead[Effect[_]] {
-  def clearAndPrintln(str: String): Effect[Unit]
-  def clearScreen(): Effect[Unit]
-  def println(str: String): Effect[Unit]
-  def readStr: Effect[String]
-  def readInt: Effect[Int]
-  def readChar: Effect[Char]
-  def readKeyStrokeAsChar: Effect[Char]
+trait PrintAndRead[F[_]] {
+  def clearAndPrintln(str: String): F[Unit]
+  def clearScreen(): F[Unit]
+  def println(str: String): F[Unit]
+  def readStr: F[String]
+  def readInt: F[Int]
+  def readChar: F[Char]
+  def readKeyStrokeAsChar: F[Char]
 }
 
 object PrintAndRead {
-  def apply[Effect[_]: PrintAndRead]: PrintAndRead[Effect] = implicitly[PrintAndRead[Effect]]
+  def apply[F[_]: PrintAndRead]: PrintAndRead[F] = implicitly[PrintAndRead[F]]
 }

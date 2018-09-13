@@ -6,8 +6,8 @@ import mmenestret.maze.algebras.GameLogic
 
 object GameLogicImpl {
 
-  def apply[Effect[+ _]: MonadError[?[_], Throwable]]: GameLogic[Effect] = new GameLogic[Effect] {
-    val M: MonadError[Effect, Throwable] = MonadError[Effect, Throwable]
+  def apply[F[+ _]: MonadError[?[_], Throwable]]: GameLogic[F] = new GameLogic[F] {
+    val M: MonadError[F, Throwable] = MonadError[F, Throwable]
 
     def computeNewPosition(gameMap: GameMap, move: Move): Int = {
       val GameMap(maplength, _, currentPosition, _) = gameMap
@@ -26,7 +26,7 @@ object GameLogicImpl {
       }
     }
 
-    override def generateMapRepresentation(gameMap: GameMap): Effect[String] = {
+    override def generateMapRepresentation(gameMap: GameMap): F[String] = {
 
       val GameMap(mapLength, trapsPosition, currentPosition, finishPosition) = gameMap
 
@@ -42,7 +42,7 @@ object GameLogicImpl {
       def lineToStr: List[String] ⇒ String = lineToStrWithPlayer(playerDesign)
 
       for {
-        initialMapDisplay ← List.fill(mapLength * mapLength)(emptyCellDesign).pure[Effect]
+        initialMapDisplay ← List.fill(mapLength * mapLength)(emptyCellDesign).pure[F]
 
         // Unsafe Operations
         finalMapDisplay ← M.catchNonFatal {
@@ -67,7 +67,7 @@ object GameLogicImpl {
       } yield s"$topBorderDesign\n$first\n$inner\n$last\n$bottomBorderDesign"
     }
 
-    override def computeGameState(gameMap: GameMap, move: Move): Effect[GameState] = {
+    override def computeGameState(gameMap: GameMap, move: Move): F[GameState] = {
 
       def isTrap(pos: Int, gm: GameMap): Boolean = gm.trapsPosition.contains(pos)
 
@@ -76,12 +76,12 @@ object GameLogicImpl {
         if (newPosition == gameMap.finishPosition) Won
         else if (isTrap(newPosition, gameMap)) Lost
         else OnGoing
-      GameState(gameMap.copy(playerPosition = newPosition), state).pure[Effect]
+      GameState(gameMap.copy(playerPosition = newPosition), state).pure[F]
     }
 
-    override def endMessage(state: Finished): Effect[String] = state match {
-      case Lost ⇒ "You lost, you piece of shit !".pure[Effect]
-      case Won  ⇒ "You won, lucky bastard !".pure[Effect]
+    override def endMessage(state: Finished): F[String] = state match {
+      case Lost ⇒ "You lost, you piece of shit !".pure[F]
+      case Won  ⇒ "You won, lucky bastard !".pure[F]
     }
   }
 

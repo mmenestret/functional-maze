@@ -1,15 +1,15 @@
 package mmenestret.maze.algebras
 import mmenestret.maze.ADT.{KeyboardLayout, Move}
 
-trait PlayerInteractions[Effect[_]] {
-  def displayMap(mapAsString: String): Effect[Unit]
-  def displayEndMessage(msg: String): Effect[Unit]
-  def askPlayerDirection(layout: KeyboardLayout): Effect[Move]
-  def afkForMapSize(): Effect[Int]
-  def afkForNumberOfTrap(): Effect[Int]
-  def askForKeyboardLayout(): Effect[KeyboardLayout]
-  def clearPlayerScreen(): Effect[Unit]
+trait PlayerInteractions[F[_]] {
+  def displayMap(mapAsString: String): F[Unit]
+  def displayEndMessage(msg: String): F[Unit]
+  def askPlayerDirection(layout: KeyboardLayout): F[Move]
+  def afkForMapSize(): F[Int]
+  def afkForNumberOfTrap(): F[Int]
+  def askForKeyboardLayout(): F[KeyboardLayout]
+  def clearPlayerScreen(): F[Unit]
 }
 object PlayerInteractions {
-  def apply[Effect[_]: PlayerInteractions]: PlayerInteractions[Effect] = implicitly[PlayerInteractions[Effect]]
+  def apply[F[_]: PlayerInteractions]: PlayerInteractions[F] = implicitly[PlayerInteractions[F]]
 }

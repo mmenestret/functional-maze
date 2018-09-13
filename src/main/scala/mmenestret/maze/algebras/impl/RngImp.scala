@@ -6,11 +6,11 @@ import scala.util.Random
 
 object RngImp {
 
-  def apply[Effect[_]: Sync]: Rng[Effect] = new Rng[Effect] {
+  def apply[F[_]: Sync]: Rng[F] = new Rng[F] {
 
-    val S: Sync[Effect] = Sync[Effect]
+    val S: Sync[F] = Sync[F]
 
-    override def generateRngBetween(low: Int, high: Int): Effect[Int] = S.delay(Random.nextInt(high - low) + low)
+    override def generateRngBetween(low: Int, high: Int): F[Int] = S.delay(Random.nextInt(high - low) + low)
   }
 
 }

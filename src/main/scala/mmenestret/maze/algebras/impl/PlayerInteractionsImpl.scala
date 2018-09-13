@@ -6,42 +6,42 @@ import mmenestret.maze.algebras.{PlayerInteractions, PrintAndRead}
 
 object PlayerInteractionsImpl {
 
-  def apply[Effect[+ _]: PrintAndRead: MonadError[?[_], Throwable]]: PlayerInteractions[Effect] =
-    new PlayerInteractions[Effect] {
+  def apply[F[+ _]: PrintAndRead: MonadError[?[_], Throwable]]: PlayerInteractions[F] =
+    new PlayerInteractions[F] {
 
-      val PR: PrintAndRead[Effect] = PrintAndRead[Effect]
+      val PR: PrintAndRead[F] = PrintAndRead[F]
 
-      override def clearPlayerScreen(): Effect[Unit] = PR.clearScreen()
+      override def clearPlayerScreen(): F[Unit] = PR.clearScreen()
 
-      override def displayEndMessage(msg: String): Effect[Unit] = PR.println(msg)
+      override def displayEndMessage(msg: String): F[Unit] = PR.println(msg)
 
-      override def displayMap(mapAsString: String): Effect[Unit] = PR.clearAndPrintln(mapAsString)
+      override def displayMap(mapAsString: String): F[Unit] = PR.clearAndPrintln(mapAsString)
 
-      override def askPlayerDirection(layout: KeyboardLayout): Effect[Move] = {
+      override def askPlayerDirection(layout: KeyboardLayout): F[Move] = {
         val keys = KeyboardLayout.keys(layout)
         (for {
           input ← PR.readKeyStrokeAsChar
           move ← input match {
-            case k if k == keys.up    ⇒ Up.pure[Effect]: Effect[Move]
-            case k if k == keys.down  ⇒ Down.pure[Effect]
-            case k if k == keys.left  ⇒ Left.pure[Effect]
-            case k if k == keys.right ⇒ Right.pure[Effect]
+            case k if k == keys.up    ⇒ Up.pure[F]: F[Move]
+            case k if k == keys.down  ⇒ Down.pure[F]
+            case k if k == keys.left  ⇒ Left.pure[F]
+            case k if k == keys.right ⇒ Right.pure[F]
             case _                    ⇒ askPlayerDirection(layout)
           }
         } yield move).recoverWith { case _ ⇒ askPlayerDirection(layout) }
       }
 
-      override def afkForMapSize(): Effect[Int] =
+      override def afkForMapSize(): F[Int] =
         PR.println("What's the map side's size you want to play on, noob ?") *> PR.readInt
 
-      override def afkForNumberOfTrap(): Effect[Int] = PR.println("How many traps ?") *> PR.readInt
+      override def afkForNumberOfTrap(): F[Int] = PR.println("How many traps ?") *> PR.readInt
 
-      override def askForKeyboardLayout(): Effect[KeyboardLayout] =
+      override def askForKeyboardLayout(): F[KeyboardLayout] =
         (PR.println("(A)zerty or (Q)werty ? (A or Q for the idiots who didn't get it...)") *> PR.readChar.map(
           _.toLower))
           .flatMap {
-            case 'a' ⇒ Azerty.pure[Effect]
-            case 'q' ⇒ Qwerty.pure[Effect]
+            case 'a' ⇒ Azerty.pure[F]
+            case 'q' ⇒ Qwerty.pure[F]
             case _   ⇒ askForKeyboardLayout()
           }
     }

@@ -1,11 +1,11 @@
 package mmenestret.maze.algebras
 import mmenestret.maze.ADT._
 
-trait GameLogic[Effect[_]] {
-  def generateMapRepresentation(gm: GameMap): Effect[String]
-  def computeGameState(gameMap: GameMap, move: Move): Effect[GameState]
-  def endMessage(state: Finished): Effect[String]
+trait GameLogic[F[_]] {
+  def generateMapRepresentation(gm: GameMap): F[String]
+  def computeGameState(gameMap: GameMap, move: Move): F[GameState]
+  def endMessage(state: Finished): F[String]
 }
 object GameLogic {
-  def apply[Effect[_]: GameLogic]: GameLogic[Effect] = implicitly[GameLogic[Effect]]
+  def apply[F[_]: GameLogic]: GameLogic[F] = implicitly[GameLogic[F]]
 }

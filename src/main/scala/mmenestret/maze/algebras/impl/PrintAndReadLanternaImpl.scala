@@ -6,22 +6,22 @@ import mmenestret.maze.algebras.PrintAndRead
 
 object PrintAndReadLanternaImpl {
 
-  def apply[Effect[_]: Sync]: Effect[PrintAndRead[Effect]] = {
+  def apply[F[_]: Sync]: F[PrintAndRead[F]] = {
 
-    val S = Sync[Effect]
+    val S = Sync[F]
 
     S.delay(new DefaultTerminalFactory().createTerminal()).map { term ⇒
-      new PrintAndRead[Effect] {
-        def putChar(c: Char): Effect[Unit]     = S.delay(term.putCharacter(c))
-        def flush: Effect[Unit]                = S.delay(term.flush())
-        def clearScreen(): Effect[Unit]        = S.delay(term.clearScreen())
-        def println(str: String): Effect[Unit] = str.toList.traverse(putChar) *> putChar('\n') *> flush
-        def clearAndPrintln(str: String): Effect[Unit] =
+      new PrintAndRead[F] {
+        def putChar(c: Char): F[Unit]     = S.delay(term.putCharacter(c))
+        def flush: F[Unit]                = S.delay(term.flush())
+        def clearScreen(): F[Unit]        = S.delay(term.clearScreen())
+        def println(str: String): F[Unit] = str.toList.traverse(putChar) *> putChar('\n') *> flush
+        def clearAndPrintln(str: String): F[Unit] =
           clearScreen *> str.toList.traverse(putChar) *> putChar('\n') *> flush
-        def readStr: Effect[String] = S.delay(scala.io.StdIn.readLine()).recoverWith { case _ ⇒ readStr }
-        def readInt: Effect[Int]    = S.delay(scala.io.StdIn.readInt()).recoverWith { case _  ⇒ readInt }
-        def readChar: Effect[Char]  = S.delay(scala.io.StdIn.readChar()).recoverWith { case _ ⇒ readChar }
-        def readKeyStrokeAsChar: Effect[Char] =
+        def readStr: F[String] = S.delay(scala.io.StdIn.readLine()).recoverWith { case _ ⇒ readStr }
+        def readInt: F[Int]    = S.delay(scala.io.StdIn.readInt()).recoverWith { case _  ⇒ readInt }
+        def readChar: F[Char]  = S.delay(scala.io.StdIn.readChar()).recoverWith { case _ ⇒ readChar }
+        def readKeyStrokeAsChar: F[Char] =
           for {
             ksOpt ← S.delay(Option(term.pollInput().getCharacter).map(_.toChar))
             ks ← ksOpt match {
