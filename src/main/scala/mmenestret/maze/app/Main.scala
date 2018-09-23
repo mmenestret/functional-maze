@@ -37,17 +37,16 @@ object Main extends App {
       layout     ← askForKeyboardLayout()
       _          ← clearPlayerScreen()
       trapsList  ← generateNRngBetween(nbOfTraps)(1, sideLength * sideLength - 1)
-      map = GameMap.emptyGameMap(sideLength, trapsList)
-      _ ← gameLoop().runA(GameState(layout, map, OnGoing))
+      _          ← gameLoop().runA(GameState.emptyGameState(layout, sideLength, trapsList))
     } yield ()
 
   }
 
   def program[F[+ _]: Sync]: F[Unit] = {
     PrintAndReadLanternaImpl.initiate[F].flatMap { implicit term ⇒
-      implicit val g: GameLogic[F]             = GameLogicImpl[F]
-      implicit val rng: Rng[F]                 = RngImp[F]
-      implicit val pi: PlayerInteractions[F]   = PlayerInteractionsImpl[F]
+      implicit val g: GameLogic[F]           = GameLogicImpl[F]
+      implicit val rng: Rng[F]               = RngImp[F]
+      implicit val pi: PlayerInteractions[F] = PlayerInteractionsImpl[F]
       runGame[F]
     }
   }
