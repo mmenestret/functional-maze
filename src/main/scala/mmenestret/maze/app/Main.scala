@@ -26,7 +26,9 @@ object Main extends App {
       }
     } yield ()
 
-  def initiateGame[F[_]: Monad](implicit P: PlayerInteractions[F], R: Rng[F]): F[GameState] =
+  def initiateGame[F[_]: Monad](implicit P: PlayerInteractions[F],
+                                R: Rng[F],
+                                G: GameLogic[F]): F[MonadState[F, GameState]] =
     for {
       _          ← P.clearPlayerScreen()
       sideLength ← P.afkForMapSize()
@@ -34,22 +36,14 @@ object Main extends App {
       layout     ← P.askForKeyboardLayout()
       _          ← P.clearPlayerScreen()
       trapsList  ← R.generateNRngBetween(nbOfTraps)(1, sideLength * sideLength - 1)
-    } yield GameState.emptyGameState(layout, sideLength, trapsList)
+    } yield G.initiateGameState(GameState.emptyGameState(layout, sideLength, trapsList))
 
   def program[F[+ _]: Sync]: F[Unit] = {
     PrintAndReadLanternaImpl.initiate[F].flatMap { implicit term ⇒
       implicit val g: GameLogic[F]           = GameLogicImpl[F]
       implicit val rng: Rng[F]               = RngImp[F]
       implicit val pi: PlayerInteractions[F] = PlayerInteractionsImpl[F]
-      initiateGame[F].flatMap { initialState ⇒
-        implicit val S: MonadState[F, GameState] = new MonadState[F, GameState] {
-          var internalState: GameState                           = initialState
-          override val monad: Monad[F]                           = Monad[F]
-          override def get: F[GameState]                         = internalState.pure[F]
-          override def set(s: GameState): F[Unit]                = { internalState = s }.pure[F]
-          override def inspect[A](f: GameState ⇒ A): F[A]        = f(internalState).pure[F]
-          override def modify(f: GameState ⇒ GameState): F[Unit] = { internalState = f(internalState) }.pure[F]
-        }
+      initiateGame[F].flatMap { implicit initialState ⇒
         gameLoop[F]()
       }
     }
