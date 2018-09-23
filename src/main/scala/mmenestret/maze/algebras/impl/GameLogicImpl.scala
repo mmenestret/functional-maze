@@ -67,16 +67,16 @@ object GameLogicImpl {
       } yield s"$topBorderDesign\n$first\n$inner\n$last\n$bottomBorderDesign"
     }
 
-    override def computeGameState(gameMap: GameMap, move: Move): F[GameState] = {
+    override def computeGameState(gameState: GameState, move: Move): F[GameState] = {
 
       def isTrap(pos: Int, gm: GameMap): Boolean = gm.trapsPosition.contains(pos)
 
-      val newPosition = computeNewPosition(gameMap, move)
+      val newPosition = computeNewPosition(gameState.map, move)
       val state =
-        if (newPosition == gameMap.finishPosition) Won
-        else if (isTrap(newPosition, gameMap)) Lost
+        if (newPosition == gameState.map.finishPosition) Won
+        else if (isTrap(newPosition, gameState.map)) Lost
         else OnGoing
-      GameState(gameMap.copy(playerPosition = newPosition), state).pure[F]
+      GameState(gameState.layout, gameState.map.copy(playerPosition = newPosition), state).pure[F]
     }
 
     override def endMessage(state: Finished): F[String] = state match {

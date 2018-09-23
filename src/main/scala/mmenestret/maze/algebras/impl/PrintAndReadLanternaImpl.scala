@@ -6,7 +6,7 @@ import mmenestret.maze.algebras.PrintAndRead
 
 object PrintAndReadLanternaImpl {
 
-  def apply[F[_]: Sync]: F[PrintAndRead[F]] = {
+  def initiate[F[_]: Sync]: F[PrintAndRead[F]] = {
 
     val S = Sync[F]
 
