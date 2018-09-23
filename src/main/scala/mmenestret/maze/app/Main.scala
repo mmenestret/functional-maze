@@ -18,11 +18,11 @@ object Main extends App {
       _                 ← P.displayMap(mapRepresentation)
       playerMove        ← P.askPlayerDirection(state.layout)
       gameState         ← G.computeGameState(state, playerMove)
-      _ ← gameState match {
-        case GameState(_, newMap, OnGoing) ⇒
-          S.set(gameState.copy(map = newMap): GameState).flatMap(_ ⇒ gameLoop[F]())
-        case GameState(_, _, state: Finished) ⇒
-          G.endMessage(state).flatMap(P.displayEndMessage)
+      _ ← gameState.status match {
+        case OnGoing ⇒
+          S.set(gameState).flatMap(_ ⇒ gameLoop[F]())
+        case status: Finished ⇒
+          G.generateEndMessage(status).flatMap(P.displayEndMessage)
       }
     } yield ()
 

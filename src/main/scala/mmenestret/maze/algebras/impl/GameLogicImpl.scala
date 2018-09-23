@@ -79,7 +79,7 @@ object GameLogicImpl {
       GameState(gameState.layout, gameState.map.copy(playerPosition = newPosition), state).pure[F]
     }
 
-    override def endMessage(state: Finished): F[String] = state match {
+    override def generateEndMessage(state: Finished): F[String] = state match {
       case Lost ⇒ "You lost, you piece of shit !".pure[F]
       case Won  ⇒ "You won, lucky bastard !".pure[F]
     }

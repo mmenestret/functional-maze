@@ -7,7 +7,7 @@ import mmenestret.maze.ADT._
 trait GameLogic[F[_]] {
   def generateMapRepresentation(gm: GameMap): F[String]
   def computeGameState(gameState: GameState, move: Move): F[GameState]
-  def endMessage(state: Finished): F[String]
+  def generateEndMessage(state: Finished): F[String]
   def initiateGameState(gameState: GameState)(implicit m: Monad[F]): MonadState[F, GameState] =
     new MonadState[F, GameState] {
       var internalState: GameState                           = gameState
