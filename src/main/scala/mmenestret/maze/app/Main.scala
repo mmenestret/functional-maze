@@ -9,34 +9,30 @@ import mmenestret.maze.algebras.impl._
 
 object Main extends App {
 
-  import GameLogic._
-  import PlayerInteractions._
-  import Rng._
-
-  def runGame[F[_]: GameLogic: PlayerInteractions: Rng: Monad]: F[Unit] = {
+  def runGame[F[_]](implicit G: GameLogic[F], P: PlayerInteractions[F], R: Rng[F], M: Monad[F]): F[Unit] = {
 
     def gameLoop(): StateT[F, GameState, Unit] =
       for {
         state             ← StateT.get[F, GameState]
-        mapRepresentation ← StateT.liftF(generateMapRepresentation(state.map))
-        _                 ← StateT.liftF(displayMap(mapRepresentation))
-        playerMove        ← StateT.liftF(askPlayerDirection(state.layout))
-        gameState         ← StateT.liftF(computeGameState(state, playerMove))
+        mapRepresentation ← StateT.liftF(G.generateMapRepresentation(state.map))
+        _                 ← StateT.liftF(P.displayMap(mapRepresentation))
+        playerMove        ← StateT.liftF(P.askPlayerDirection(state.layout))
+        gameState         ← StateT.liftF(G.computeGameState(state, playerMove))
         _ ← gameState match {
           case GameState(_, newMap, OnGoing) ⇒
             StateT.set[F, GameState](gameState.copy(map = newMap): GameState).flatMap(_ ⇒ gameLoop())
           case GameState(_, _, state: Finished) ⇒
-            StateT.liftF[F, GameState, Unit](endMessage(state).flatMap(displayEndMessage(_)))
+            StateT.liftF[F, GameState, Unit](G.endMessage(state).flatMap(P.displayEndMessage))
         }
       } yield ()
 
     for {
-      _          ← clearPlayerScreen()
-      sideLength ← afkForMapSize()
-      nbOfTraps  ← afkForNumberOfTrap()
-      layout     ← askForKeyboardLayout()
-      _          ← clearPlayerScreen()
-      trapsList  ← generateNRngBetween(nbOfTraps)(1, sideLength * sideLength - 1)
+      _          ← P.clearPlayerScreen()
+      sideLength ← P.afkForMapSize()
+      nbOfTraps  ← P.afkForNumberOfTrap()
+      layout     ← P.askForKeyboardLayout()
+      _          ← P.clearPlayerScreen()
+      trapsList  ← R.generateNRngBetween(nbOfTraps)(1, sideLength * sideLength - 1)
       _          ← gameLoop().runA(GameState.emptyGameState(layout, sideLength, trapsList))
     } yield ()
 
