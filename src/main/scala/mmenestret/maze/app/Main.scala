@@ -9,7 +9,7 @@ import mmenestret.maze.algebras.impl._
 
 object Main extends App {
 
-  def gameLoop[F[_]: Monad]()(implicit G: GameLogic[F],
+  def gameLoop[F[_]: Monad](implicit G: GameLogic[F],
                               P: PlayerInteractions[F],
                               S: MonadState[F, GameState]): F[Unit] =
     for {
@@ -20,7 +20,7 @@ object Main extends App {
       gameState         ← G.computeGameState(state, playerMove)
       _ ← gameState.status match {
         case OnGoing ⇒
-          S.set(gameState).flatMap(_ ⇒ gameLoop[F]())
+          S.set(gameState).flatMap(_ ⇒ gameLoop[F])
         case status: Finished ⇒
           G.generateEndMessage(status).flatMap(P.displayEndMessage)
       }
@@ -38,13 +38,13 @@ object Main extends App {
       trapsList  ← R.generateNRngBetween(nbOfTraps)(1, sideLength * sideLength - 1)
     } yield G.initiateGameState(GameState.emptyGameState(layout, sideLength, trapsList))
 
-  def program[F[+ _]: Sync]: F[Unit] = {
+  def program[F[_]: Sync]: F[Unit] = {
     PrintAndReadLanternaImpl.initiate[F].flatMap { implicit term ⇒
       implicit val g: GameLogic[F]           = GameLogicImpl[F]
       implicit val rng: Rng[F]               = RngImp[F]
       implicit val pi: PlayerInteractions[F] = PlayerInteractionsImpl[F]
       initiateGame[F].flatMap { implicit initialState ⇒
-        gameLoop[F]()
+        gameLoop[F]
       }
     }
   }
