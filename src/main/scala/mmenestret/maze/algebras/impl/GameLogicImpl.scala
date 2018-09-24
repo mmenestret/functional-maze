@@ -6,7 +6,7 @@ import mmenestret.maze.algebras.GameLogic
 
 object GameLogicImpl {
 
-  def apply[F[+ _]: MonadError[?[_], Throwable]]: GameLogic[F] = new GameLogic[F] {
+  def apply[F[_]: MonadError[?[_], Throwable]]: GameLogic[F] = new GameLogic[F] {
     val M: MonadError[F, Throwable] = MonadError[F, Throwable]
 
     def computeNewPosition(gameMap: GameMap, move: Move): Int = {
