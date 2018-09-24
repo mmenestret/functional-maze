@@ -6,21 +6,19 @@ import mmenestret.maze.algebras.PrintAndRead
 
 object PrintAndReadLanternaImpl {
 
-  def initiate[F[_]: Sync]: F[PrintAndRead[F]] = {
-
-    val S = Sync[F]
+  def initiate[F[_]](implicit S: Sync[F]): F[PrintAndRead[F]] = {
 
     S.delay(new DefaultTerminalFactory().createTerminal()).map { term ⇒
       new PrintAndRead[F] {
-        def putChar(c: Char): F[Unit]     = S.delay(term.putCharacter(c))
-        def flush: F[Unit]                = S.delay(term.flush())
+        // Utility
+        def putChar(c: Char): F[Unit] = S.delay(term.putCharacter(c))
+        def flush: F[Unit]            = S.delay(term.flush())
+        // PrintAndRead
         def clearScreen(): F[Unit]        = S.delay(term.clearScreen())
         def println(str: String): F[Unit] = str.toList.traverse(putChar) *> putChar('\n') *> flush
-        def clearAndPrintln(str: String): F[Unit] =
-          clearScreen *> str.toList.traverse(putChar) *> putChar('\n') *> flush
-        def readStr: F[String] = S.delay(scala.io.StdIn.readLine()).recoverWith { case _ ⇒ readStr }
-        def readInt: F[Int]    = S.delay(scala.io.StdIn.readInt()).recoverWith { case _  ⇒ readInt }
-        def readChar: F[Char]  = S.delay(scala.io.StdIn.readChar()).recoverWith { case _ ⇒ readChar }
+        def readStr: F[String]            = S.delay(scala.io.StdIn.readLine()).recoverWith { case _ ⇒ readStr }
+        def readInt: F[Int]               = S.delay(scala.io.StdIn.readInt()).recoverWith { case _ ⇒ readInt }
+        def readChar: F[Char]             = S.delay(scala.io.StdIn.readChar()).recoverWith { case _ ⇒ readChar }
         def readKeyStrokeAsChar: F[Char] =
           for {
             ksOpt ← S.delay(Option(term.pollInput().getCharacter).map(_.toChar))

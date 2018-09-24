@@ -6,21 +6,20 @@ import mmenestret.maze.algebras.GameLogic
 
 object GameLogicImpl {
 
-  def apply[F[_]: MonadError[?[_], Throwable]]: GameLogic[F] = new GameLogic[F] {
-    val M: MonadError[F, Throwable] = MonadError[F, Throwable]
+  def apply[F[_]](implicit M: MonadError[F, Throwable]): GameLogic[F] = new GameLogic[F] {
 
-    def computeNewPosition(gameMap: GameMap, move: Move): Int = {
-      val GameMap(maplength, _, currentPosition, _) = gameMap
+    def computeNewPosition(sideLength: Int, currentPosition: Int, move: Move): Int = {
       move match {
         case Up ⇒
-          val unvalidatedPosition = currentPosition - maplength
+          val unvalidatedPosition = currentPosition - sideLength
           if (unvalidatedPosition >= 0) unvalidatedPosition else currentPosition
         case Down ⇒
-          val unvalidatedPosition = currentPosition + maplength
-          if (unvalidatedPosition < gameMap.sideLength * gameMap.sideLength) unvalidatedPosition else currentPosition
+          val unvalidatedPosition = currentPosition + sideLength
+          if (unvalidatedPosition < sideLength * sideLength) unvalidatedPosition else currentPosition
         case m @ _ ⇒
           val unvalidatedPosition = if (m == Left) currentPosition - 1 else currentPosition + 1
-          if (unvalidatedPosition / gameMap.sideLength == currentPosition / gameMap.sideLength && unvalidatedPosition >= 0)
+          val onTheSameLine       = (unvalidatedPosition / sideLength) == (currentPosition / sideLength)
+          if (onTheSameLine && unvalidatedPosition >= 0)
             unvalidatedPosition
           else currentPosition
       }
@@ -69,19 +68,20 @@ object GameLogicImpl {
 
     override def computeGameState(gameState: GameState, move: Move): F[GameState] = {
 
-      def isTrap(pos: Int, gm: GameMap): Boolean = gm.trapsPosition.contains(pos)
+      def isTrap(pos: Int): Boolean = gameState.map.trapsPosition.contains(pos)
 
-      val newPosition = computeNewPosition(gameState.map, move)
-      val state =
+      val newPosition = computeNewPosition(gameState.map.sideLength, gameState.map.playerPosition, move)
+      val newMap      = gameState.map.copy(playerPosition = newPosition)
+      val newStatus =
         if (newPosition == gameState.map.finishPosition) Won
-        else if (isTrap(newPosition, gameState.map)) Lost
+        else if (isTrap(newPosition)) Lost
         else OnGoing
-      GameState(gameState.layout, gameState.map.copy(playerPosition = newPosition), state).pure[F]
+      gameState.copy(map = newMap, status = newStatus).pure[F]
     }
 
     override def generateEndMessage(state: Finished): F[String] = state match {
-      case Lost ⇒ "You lost, you piece of shit !".pure[F]
-      case Won  ⇒ "You won, lucky bastard !".pure[F]
+      case Lost ⇒ "You lost, noob !".pure[F]
+      case Won  ⇒ "You won, pure luck !".pure[F]
     }
   }
 

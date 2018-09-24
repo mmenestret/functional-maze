@@ -5,12 +5,6 @@ import mmenestret.maze.algebras.Rng
 import scala.util.Random
 
 object RngImp {
-
-  def apply[F[_]: Sync]: Rng[F] = new Rng[F] {
-
-    val S: Sync[F] = Sync[F]
-
-    override def generateRngBetween(low: Int, high: Int): F[Int] = S.delay(Random.nextInt(high - low) + low)
-  }
-
+  def apply[F[_]: Sync](implicit S: Sync[F]): Rng[F] =
+    (low: Int, high: Int) => S.delay(Random.nextInt(high - low) + low)
 }

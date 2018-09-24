@@ -6,10 +6,8 @@ import mmenestret.maze.algebras.{PlayerInteractions, PrintAndRead}
 
 object PlayerInteractionsImpl {
 
-  def apply[F[_]: PrintAndRead: MonadError[?[_], Throwable]]: PlayerInteractions[F] =
+  def apply[F[_]: MonadError[?[_], Throwable]](implicit PR: PrintAndRead[F]): PlayerInteractions[F] =
     new PlayerInteractions[F] {
-
-      val PR: PrintAndRead[F] = PrintAndRead[F]
 
       override def clearPlayerScreen(): F[Unit] = PR.clearScreen()
 
@@ -32,12 +30,12 @@ object PlayerInteractionsImpl {
       }
 
       override def afkForMapSize(): F[Int] =
-        PR.println("What's the map side's size you want to play on, noob ?") *> PR.readInt
+        PR.println("What's the map side's size you want to play on ?") *> PR.readInt
 
-      override def afkForNumberOfTrap(): F[Int] = PR.println("How many traps ?") *> PR.readInt
+      override def afkForNumberOfTrap(): F[Int] = PR.println("With how many traps ?") *> PR.readInt
 
       override def askForKeyboardLayout(): F[KeyboardLayout] =
-        (PR.println("(A)zerty or (Q)werty ? (A or Q for the idiots who didn't get it...)") *> PR.readChar.map(
+        (PR.println("(A)zerty or (Q)werty ? (A or Q for those who didn't get it...)") *> PR.readChar.map(
           _.toLower))
           .flatMap {
             case 'a' ⇒ KeyboardLayout.azerty.pure[F]
