@@ -36,7 +36,7 @@ object Main extends App {
       trapsList  ← R.generateNRngBetween(nbOfTraps)(1, sideLength * sideLength - 1)
     } yield GameState.emptyGameState(layout, sideLength, trapsList)
 
-  def program[F[+ _]: Sync]: F[Unit] = {
+  def program[F[_]: Sync]: F[Unit] = {
     PrintAndReadLanternaImpl.initiate[F].flatMap { implicit term ⇒
       implicit val g: GameLogic[F]           = GameLogicImpl[F]
       implicit val rng: Rng[F]               = RngImp[F]
